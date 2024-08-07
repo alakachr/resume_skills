@@ -1,0 +1,39 @@
+[tool.poetry]
+name = "resume-skills"
+version = "0.1.0"
+description = "\"Extract skills levels from resumes\""
+authors = ["Christian <christian@allisone.ai>"]
+readme = "README.md"
+
+
+[tool.poetry.dependencies]
+python = "3.10.5"
+torch = { url = "https://download.pytorch.org/whl/cu116/torch-1.13.1%2Bcu116-cp310-cp310-linux_x86_64.whl" }
+omegaconf = "^2.3.0"
+openai = "^1.40.1"
+python-dotenv = "^1.0.1"
+transformers = "^4.44.0"
+instructor = "^1.3.7"
+
+
+[tool.poetry.group.dev.dependencies]
+notebook = "^7.2.1"
+
+[tool.ruff]
+line-length = 100
+# lint, pyflakes, pycodestyle
+select = ["F", "E", "W"]
+ignore = ["E501"]
+
+[tool.ruff.per-file-ignores]
+"__init__.py" = ["F401"]
+
+
+[tool.black]
+line-length = 100
+target-version = ['py310']
+include = '\.pyi?$'
+
+[tool.isort]
+line_length = 100
+profile = 'black'
