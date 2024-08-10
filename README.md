@@ -14,3 +14,5 @@ We train the model for 3 epochs. Since the dataset a small there is a risk of ov
 We evaluated (inside notebooks/Testing_trained_model.ipynb ) the model on small dataset (15) and the model achived 0.25 recall and 0.37 precision on skill name detection. However, for skill level , the model predicted 0 all the time.
 
 Many difficulties can explain those results: dataset is very small, the labels are not accurate (obtained with gpt4) , the class 0 for skill level is over represented, and the model was not properly trained on many epochs (and maybe overfitted a bit).
+
+Requirements for  this project  can be found in pyproject.toml
