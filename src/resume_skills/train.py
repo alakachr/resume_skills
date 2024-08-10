@@ -1,24 +1,25 @@
 from huggingface_hub import HfFolder
-from transformers import (
-    DonutProcessor,
-    Seq2SeqTrainer,
-    Seq2SeqTrainingArguments,
-    VisionEncoderDecoderModel,
-)
+from transformers import Seq2SeqTrainer, Seq2SeqTrainingArguments, VisionEncoderDecoderModel
 
 from resume_skills.dataset import DonutDataset
 
 # hyperparameters used for multiple args
 hf_repository_id = "donut-base-resume"
-processor = DonutProcessor.from_pretrained("naver-clova-ix/donut-base-finetuned-cord-v2")
+
 model = VisionEncoderDecoderModel.from_pretrained("naver-clova-ix/donut-base-finetuned-cord-v2")
+
+
 train_dataset = DonutDataset()
+model.config.pad_token_id = train_dataset.processor.tokenizer.pad_token_id
+model.config.decoder_start_token_id = train_dataset.processor.tokenizer.convert_tokens_to_ids([""])[
+    0
+]
 # Arguments for training
 training_args = Seq2SeqTrainingArguments(
     output_dir=hf_repository_id,
     num_train_epochs=3,
     learning_rate=2e-5,
-    per_device_train_batch_size=2,
+    per_device_train_batch_size=1,
     weight_decay=0.01,
     fp16=True,
     logging_steps=100,
@@ -40,3 +41,8 @@ trainer = Seq2SeqTrainer(
     args=training_args,
     train_dataset=train_dataset,
 )
+
+trainer.train()
+train_dataset.processor.save_pretrained(hf_repository_id)
+trainer.create_model_card()
+trainer.push_to_hub()

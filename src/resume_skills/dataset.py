@@ -7,7 +7,8 @@ from PIL import Image
 from torch.utils.data import Dataset
 from transformers import DonutProcessor
 
-added_tokens = []
+task_start_token = "<s>"  # start of task token
+eos_token = "</s>"
 
 
 class DonutDataset(Dataset):
@@ -21,14 +22,23 @@ class DonutDataset(Dataset):
         images_path: str = "/data/ubuntu/resume_skills/data/train/images_train",
         labels_path: str = "/data/ubuntu/resume_skills/data/train/labels",
         ignore_id: int = -100,
+        max_length: int = 20,
+        image_size: int = (1280, 960),
     ):
         super().__init__()
 
-        self.processor = DonutProcessor.from_pretrained("naver-clova-ix/donut-base")
+        self.processor = DonutProcessor.from_pretrained(
+            "naver-clova-ix/donut-base-finetuned-cord-v2"
+        )
+        self.image_size = image_size
+
+        self.processor.image_processor.size = image_size
         self.images_paths = [p for p in Path(images_path).rglob("*")]
         self.labels_paths = [p for p in Path(labels_path).rglob("*")]
         self.file_name2label_path = {p.stem: p for p in self.labels_paths}
         self.ignore_id = ignore_id
+        self.max_length = max_length
+        self.image_size = image_size
 
     def __len__(self) -> int:
         return len(self.images_paths)
@@ -42,7 +52,11 @@ class DonutDataset(Dataset):
             input_ids : tokenized gt_data
             labels : masked labels (model doesn't need to predict prompt and pad token)
         """
+
         image_path = self.images_paths[idx]
+        while image_path.stem not in self.file_name2label_path:
+            idx += 1
+            image_path = self.images_paths[idx]
         label_path = self.file_name2label_path[image_path.stem]
 
         label_text = str(json.load(open(label_path)))
@@ -55,9 +69,9 @@ class DonutDataset(Dataset):
         input_ids = self.processor.tokenizer(
             label_text,
             return_tensors="pt",
-        )[
-            "input_ids"
-        ].squeeze(0)
+            padding="max_length",
+            truncation=True,
+        )["input_ids"].squeeze(0)
 
         labels = input_ids.clone()
         labels[labels == self.processor.tokenizer.pad_token_id] = (
